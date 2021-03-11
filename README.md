@@ -19,7 +19,7 @@ Esta herramienta permite escaneár de una lista de materias/comisiones las cuale
 ### Instrucciones básicas (para el universitario apurado):
 
 - [Conseguí Python](https://www.python.org/downloads/). [Instalá las dependencias que te pida](https://packaging.python.org/tutorials/installing-packages/).
-- Descargá un Webdriver, dependiendo del navegador que tengas. ([Chrome](https://sites.google.com/a/chromium.org/chromedriver/home)|[Firefox](https://github.com/mozilla/geckodriver/releases/tag/v0.29.0))
+- Descargá un Webdriver, dependiendo del navegador que tengas. ([Chrome](https://sites.google.com/a/chromium.org/chromedriver/home)|[Firefox](https://github.com/mozilla/geckodriver/releases))
 - Abrí `siu.py` en un editor de texto, y de "VARIABLES A MODIFICAR" para abajo, editá las variables necesarias.
 
 (Si no sos familiar con Python, [visitá la guia completa.](https://github.com/despedite/chupala-siu/wiki/Instalaci%C3%B3n))
