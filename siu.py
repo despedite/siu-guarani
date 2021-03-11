@@ -11,10 +11,10 @@
 # 4. ¡Dejar correr en el fondo!
 
 # TO-DO: Auto-inscripción,
-# detectar cuando se abrió una nueva comisión que no existía antes,
 # detectar si se deslogueó solo o está en mantenimiento en el loop,
-# cambiar "time.sleep()" a una solución como la gente,
 # cambiar valores a JSON.
+# (Cerraron las inscripciones del primer cuatrimestre, así que será
+# para la proxima!)
 
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
@@ -23,6 +23,8 @@ import argparse
 from getpass import getpass
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.common.by import By
 import time
 import re
 import smtplib 
@@ -57,6 +59,9 @@ subjects = {
 
 usedSubjects = []
 
+existantSubjects = []
+firstTimeScanning = True
+
 # OPCIONAL: Enviar notificaciones por correo electrónico.
 # Si los valores son NULL, se desactiva - solo vás a ser notificado por la consola.
 # Si te gustaría ser enviado correos, escribí el correo y contraseña de tu mail
@@ -75,10 +80,21 @@ yourMail = None # Correo del que recibe el mail. (yourMail = tumail@gmail.com)
 url = 'https://guarani.unq.edu.ar/grado/acceso'
 dashboard = 'https://guarani.unq.edu.ar/grado/cursada'
 
+# Si tu conexión a Internet es lenta, talvez quieras subir este valor.
+cooldown = 2
+
 # ---------------------
 #      EL CÓDIGO
 # ---------------------
 # (¡Para usuarios avanzados!)
+
+# Esperá a que cargue la página.
+
+def waitUntilLoaded(element):
+	try:
+		myElem = WebDriverWait(driver, cooldown).until(EC.presence_of_element_located((By.ID, element)))
+	except TimeoutException:
+		print("Está tomando demasiado tiempo en cargar la página.")
 
 # "You go and search it through the Jello-net!"
 # TO-DO: Enviar todas las materias aplicables en un solo mail.
@@ -100,11 +116,17 @@ def sendEmail(html, subjectName):
 # ¿Auto-inscripción?
 
 def scanSubjects(subjectKey, subjectName):
+	time.sleep(cooldown)
 	commisions = driver.find_elements_by_class_name("comision")
+	if not commisions:
+		print("No hay comisiones disponibles.")
 	for commision in commisions:
 		try:
 			commissionCode = commision.find_element_by_tag_name("h4")
 			subjectArray = subjects.get(subjectKey)
+
+			# Revisar los existentes para ver si hay cupos abiertos.
+
 			if commissionCode.text in subjectArray:
 				try:
 					availability = commision.find_element_by_class_name("form_inscribir")
@@ -119,28 +141,50 @@ def scanSubjects(subjectKey, subjectName):
 								  <head></head>
 								  <body>
 								    <p><i>¡Buenas!</i><br>
-
 										ChupalaSIU encontró un cupo en la materia <b>""" + subjectName + """</b>.<br>
 										El número de comisión es <b>""" + commissionCode.text + """</b>.<br>
 										<a href=\"""" + driver.current_url + """\">¡Agarralo antes de que sea tarde siguiendo este link!</a><br>
-
 										- ChupalaSIU
 								    </p>
 								  </body>
 								</html>
 								"""
 								
-								sendEmail(message, "Encontamos cupos en " + subjectName + "!")
+								sendEmail(message, "¡Encontamos cupos en " + subjectName + "!")
 								usedSubjects.append(commissionCode.text)
 				except NoSuchElementException:
 					print("No hay cupos en " + commissionCode.text + ".")
-		except:
-			# Probablemente una en la que ya estás metido. Ups!
-			print("Hubo un error tratando de conseguir una comisión. Ignorando...")
 
-# TO-DO: Esto es HORRIBLE.
-# Va a funcionar si tenes una buena conexión.
-cooldown = 2
+				# Revisar nuevos a ver si se abrió una nueva comisión.
+
+				if commissionCode.text not in existantSubjects:
+					existantSubjects.append(commissionCode.text)
+					if firstTimeScanning == False:
+						print("---- IMPORTANTE ----")
+						print("Se acaba de crear una nueva comisión: " + commissionCode.text + "!")
+						print("--------------------")
+
+						if emailId and Pass:
+							message = """\
+							<html>
+							  <head></head>
+							  <body>
+							    <p><i>¡Buenas!</i><br>
+									ChupalaSIU encontró que la materia <b>""" + subjectName + """</b> tiene una nueva comisión, con la ID de <b>""" + commissionCode.text + """</b>.<br>
+									<a href=\"""" + driver.current_url + """\">¡Revisá los horarios y anotate!</a><br>
+									- ChupalaSIU
+							    </p>
+							  </body>
+							</html>
+							"""
+							
+							sendEmail(message, "¡Se creó una nueva comisión en " + subjectName + "!")
+		except:
+			comText = commision.text
+			if comText.find("Estás inscripto en"):
+				print("Ya estás inscripto a " + subjectName + ".")
+			else:
+				print("Hubo un error tratando de conseguir una comisión. Ignorando...")
 
 # Necesitamos conseguir el DNI y CONTRASEÑA del usuario en la consola.
 
@@ -168,7 +212,7 @@ for leadElement in leadElements:
 
 # ¡Dale, logueate de una vez!
 if pageAvailable:
-	time.sleep(cooldown)
+	waitUntilLoaded("guarani_form_login")
 	loginForm = driver.find_element_by_id("guarani_form_login")
 	if loginForm:
 		username = driver.find_element_by_id("usuario")
@@ -178,10 +222,12 @@ if pageAvailable:
 		password.send_keys(args.password)
 		
 		driver.find_element_by_name("login").click()
-		time.sleep(cooldown)
+		# Puede que no funcione.
+		waitUntilLoaded("layout_dos_columnas")
 
 		try:
-			time.sleep(cooldown)
+			# Esperá un momento antes de arrancar a los palos.
+			time.sleep(1)
 			errorMessage = driver.find_element_by_id("error_login")
 			if errorMessage:
 				print("No pudimos iniciar sesión. ¿Nombre de usuario o contraseña incorrectos?")
@@ -189,11 +235,11 @@ if pageAvailable:
 			# (hacker voice) WE'RE IN.
 			# Vayamos a la página de una vez.
 
+			driver.get(dashboard)
+			waitUntilLoaded("js-listado-materias")
+
 			# Eliminá esta línea si solo querés correr el código una vez.
 			while True:
-
-				driver.get(dashboard)
-				time.sleep(cooldown)
 
 				# Escaneá la lista de materias.
 				elem = driver.find_element_by_id("js-listado-materias")
@@ -205,10 +251,12 @@ if pageAvailable:
 						if key == parsedText.group(1):
 							print ("Escaneándo en " + li.text + "...")
 							li.click()
-							time.sleep(cooldown)
+							waitUntilLoaded("columna_2")
 							# Escaneá las comisiones.
 							scanSubjects(parsedText.group(1), li.text)
 							break
+				print("Escaneo terminado. Empezando de nuevo.")
+				firstTimeScanning = False
 
 
 	else:
