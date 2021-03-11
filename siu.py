@@ -192,7 +192,7 @@ if pageAvailable:
 			# Eliminá esta línea si solo querés correr el código una vez.
 			while True:
 
-        driver.get(dashboard)
+				driver.get(dashboard)
 				time.sleep(cooldown)
 
 				# Escaneá la lista de materias.
