@@ -40,6 +40,9 @@ Si no tiene que ver con eso (digamos, soporte para inscripción a materias, cosa
 #### ¿Puedo cerrar Python/el navegador mientras corre?
 Mmmm... *no.* Corre usando Selenium, que simula ser un usuario haciendo operaciones en un sitio web por código. Requiere que haya una ventana de navegador activa, lamentablemente.
 
+#### ¿Porqué se llama... *así*?
+Me parece graciosa la idea que una persona que trabaja en SIU se encuentre con este programa y discuta maneras de eliminar vulnerabilidades, y para ejemplizar su descubrimiento tenga que referir a este pedazo de código que encontró en la internet llamado "...Chupala... SIU".
+
 #### Sos un groso. ¿Te puedo comprar una cerveza?
 Vos sos más groso. Pero si insistís, [prefiero cafes.](https://ko-fi.com/retobot)
 
