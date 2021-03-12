@@ -24,6 +24,8 @@ Esta herramienta permite escaneár de una lista de materias/comisiones las cuale
 
 (Si no sos familiar con Python, [visitá la guia completa.](https://github.com/despedite/chupala-siu/wiki/Instalaci%C3%B3n))
 
+---
+
 ### Preguntas frecuentes:
 
 #### ¡El código es demasiado rápido y me tira errores!
